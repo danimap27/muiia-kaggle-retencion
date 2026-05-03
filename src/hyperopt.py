@@ -28,7 +28,7 @@ from .preprocessing import split_X_y, make_preprocessor
 from .cv import stratified_kfold
 
 warnings.filterwarnings("ignore")
-optuna.logging.set_verbosity(optuna.logging.WARNING)
+optuna.logging.set_verbosity(optuna.logging.INFO)
 
 
 def _score(estimator, X, y) -> float:
@@ -168,11 +168,21 @@ def main() -> None:
     sampler = optuna.samplers.TPESampler(seed=SEED)
     pruner = optuna.pruners.MedianPruner()
     study = optuna.create_study(direction="maximize", sampler=sampler, pruner=pruner)
+    import time
+    t0 = time.time()
+    def _cb(study, trial):
+        elapsed = time.time() - t0
+        remaining = elapsed / max(trial.number + 1, 1) * (args.n_trials - trial.number - 1)
+        print(f"[trial {trial.number+1}/{args.n_trials}] "
+              f"F1={trial.value:.4f} | best={study.best_value:.4f} | "
+              f"elapsed={elapsed/60:.1f}min | ETA={remaining/60:.1f}min", flush=True)
+
     study.optimize(
         lambda t: OBJECTIVES[args.model](t, X, y),
         n_trials=args.n_trials,
         timeout=args.timeout,
         show_progress_bar=False,
+        callbacks=[_cb],
     )
 
     best = {"model": args.model, "best_value": study.best_value, "best_params": study.best_params,

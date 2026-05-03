@@ -31,18 +31,23 @@ def main() -> None:
     if args.only:
         catalog = {k: v for k, v in catalog.items() if k in args.only}
 
-    print(f"Evaluando {len(catalog)} modelos con CV estratificada (5 folds)")
+    n = len(catalog)
+    print(f"Evaluando {n} modelos con CV estratificada (5 folds)", flush=True)
     records = []
-    for name, pipe in catalog.items():
+    t_start = time.time()
+    for i, (name, pipe) in enumerate(catalog.items(), 1):
         t0 = time.time()
         try:
             rec = cv_evaluate(pipe, X, y, name)
             rec["wallclock"] = round(time.time() - t0, 1)
             records.append(rec)
-            print(f"{name:>14s} | F1={rec['f1_mean']:.4f} ± {rec['f1_std']:.4f} | "
-                  f"AUC={rec['roc_auc_mean']:.4f} | t={rec['wallclock']}s")
+            elapsed = time.time() - t_start
+            eta = elapsed / i * (n - i)
+            print(f"[{i}/{n}] {name:>14s} | F1={rec['f1_mean']:.4f} ± {rec['f1_std']:.4f} | "
+                  f"AUC={rec['roc_auc_mean']:.4f} | t={rec['wallclock']}s | "
+                  f"ETA={eta/60:.1f}min", flush=True)
         except Exception as e:
-            print(f"{name:>14s} | ERROR: {e}")
+            print(f"[{i}/{n}] {name:>14s} | ERROR: {e}", flush=True)
     append_results(records, "models_cv.csv")
     print(f"Resultados guardados en {RES_DIR/'models_cv.csv'}")
 
