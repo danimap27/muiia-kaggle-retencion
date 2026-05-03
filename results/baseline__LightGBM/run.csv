@@ -1,0 +1,2 @@
+run_id,phase,model,exit_code,elapsed_sec,machine_id,timestamp,cmd
+baseline__LightGBM,baseline,LightGBM,1,2.6,local,2026-05-03T12:40:09,python -m src.train_baseline --only LightGBM

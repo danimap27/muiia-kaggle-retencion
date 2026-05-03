@@ -48,6 +48,13 @@ def build_final(model: str) -> Pipeline:
             auto_class_weights="Balanced", verbose=0, random_seed=SEED,
         )
         scale = False
+    elif model == "histgb":
+        from sklearn.ensemble import HistGradientBoostingClassifier
+        clf = HistGradientBoostingClassifier(
+            **_load_params("histgb"),
+            class_weight="balanced", random_state=SEED,
+        )
+        scale = False
     elif model == "stacking":
         # El pipeline de stacking ya viene serializado.
         return joblib.load(MODELS_DIR / "stacking.joblib")
@@ -61,7 +68,7 @@ def build_final(model: str) -> Pipeline:
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--model", default="lgbm",
-                        choices=["lgbm", "xgb", "cat", "stacking"])
+                        choices=["lgbm", "xgb", "cat", "histgb", "stacking"])
     parser.add_argument("--out", default="submission.csv")
     args = parser.parse_args()
 

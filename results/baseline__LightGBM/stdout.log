@@ -1,0 +1,17 @@
+Evaluando 0 modelos con CV estratificada (5 folds)
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/lustre/home/dmartin/proyecto-kaggle/src/train_baseline.py", line 56, in <module>
+    main()
+  File "/lustre/home/dmartin/proyecto-kaggle/src/train_baseline.py", line 51, in main
+    append_results(records, "models_cv.csv")
+  File "/lustre/home/dmartin/proyecto-kaggle/src/cv.py", line 50, in append_results
+    df = df.sort_values("f1_mean", ascending=False)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/dmartin/.conda/envs/kaggle-retencion/lib/python3.11/site-packages/pandas/core/frame.py", line 7189, in sort_values
+    k = self._get_label_or_level_values(by[0], axis=axis)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/dmartin/.conda/envs/kaggle-retencion/lib/python3.11/site-packages/pandas/core/generic.py", line 1911, in _get_label_or_level_values
+    raise KeyError(key)
+KeyError: 'f1_mean'

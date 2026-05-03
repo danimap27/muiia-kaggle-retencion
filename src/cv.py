@@ -46,8 +46,26 @@ def cv_evaluate(estimator, X, y, name: str) -> Dict:
 
 
 def append_results(records: List[Dict], path: str = "models_cv.csv") -> None:
+    """Concatena con resultados previos (si los hay) y reescribe ordenado por F1.
+
+    Si no hay records nuevos no se hace nada (evita romper cuando se llama
+    con un modelo no disponible).
+    """
+    if not records:
+        print("Sin resultados para registrar.")
+        return
+
+    out_path = RES_DIR / path
+    if out_path.exists():
+        prev = pd.read_csv(out_path).to_dict("records")
+        # Sustituye entradas con el mismo nombre de modelo si vuelven a aparecer.
+        names_new = {r["model"] for r in records}
+        prev = [r for r in prev if r.get("model") not in names_new]
+        records = prev + records
+
     df = pd.DataFrame(records)
-    df = df.sort_values("f1_mean", ascending=False)
-    df.to_csv(RES_DIR / path, index=False)
+    if "f1_mean" in df.columns:
+        df = df.sort_values("f1_mean", ascending=False)
+    df.to_csv(out_path, index=False)
     with open(RES_DIR / path.replace(".csv", ".json"), "w") as f:
         json.dump(records, f, indent=2)

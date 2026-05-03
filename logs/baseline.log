@@ -1,0 +1,18 @@
+TBB Warning: The number of workers is currently limited to 3. The request for 95 workers is ignored. Further requests for more workers will be silently ignored until the limit changes.
+
+Evaluando 14 modelos con CV estratificada (5 folds)
+           LDA | F1=0.4920 ± 0.0162 | AUC=0.8293 | t=0.6s
+        LogReg | F1=0.5572 ± 0.0216 | AUC=0.8321 | t=0.5s
+    GaussianNB | F1=0.2757 ± 0.0620 | AUC=0.7662 | t=0.3s
+       SVC_RBF | F1=0.5679 ± 0.0126 | AUC=0.8363 | t=50.5s
+           KNN | F1=0.4709 ± 0.0133 | AUC=0.8040 | t=0.6s
+           MLP | F1=0.5425 ± 0.0263 | AUC=0.8446 | t=4.9s
+  DecisionTree | F1=0.4924 ± 0.0213 | AUC=0.7246 | t=0.5s
+  RandomForest | F1=0.5233 ± 0.0221 | AUC=0.8344 | t=9.4s
+    ExtraTrees | F1=0.5152 ± 0.0285 | AUC=0.8214 | t=6.7s
+     GradBoost | F1=0.5554 ± 0.0261 | AUC=0.8520 | t=9.1s
+        HistGB | F1=0.5839 ± 0.0294 | AUC=0.8363 | t=1.8s
+       XGBoost | F1=0.5531 ± 0.0108 | AUC=0.8330 | t=2.9s
+      LightGBM | F1=0.5467 ± 0.0140 | AUC=0.8211 | t=8.8s
+      CatBoost | F1=0.5838 ± 0.0281 | AUC=0.8331 | t=14.5s
+Resultados guardados en /lustre/home/dmartin/proyecto-kaggle/results/models_cv.csv

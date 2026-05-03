@@ -1,0 +1,2 @@
+usage: predict.py [-h] [--model {lgbm,xgb,cat,stacking}] [--out OUT]
+predict.py: error: argument --model: invalid choice: 'histgb' (choose from 'lgbm', 'xgb', 'cat', 'stacking')

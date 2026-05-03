@@ -1,0 +1,14 @@
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/lustre/home/dmartin/proyecto-kaggle/src/stacking.py", line 95, in <module>
+    main()
+  File "/lustre/home/dmartin/proyecto-kaggle/src/stacking.py", line 81, in main
+    pipe = build_stack()
+           ^^^^^^^^^^^^^
+  File "/lustre/home/dmartin/proyecto-kaggle/src/stacking.py", line 60, in build_stack
+    ("xgb", _xgb(_load_best("xgb"))),
+            ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/lustre/home/dmartin/proyecto-kaggle/src/stacking.py", line 33, in _xgb
+    from xgboost import XGBClassifier
+ModuleNotFoundError: No module named 'xgboost'

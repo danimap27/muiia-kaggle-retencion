@@ -1,0 +1,2 @@
+run_id,phase,model,exit_code,elapsed_sec,machine_id,timestamp,cmd
+hyperopt__histgb,hyperopt,histgb,1,0.2,local,2026-05-03T12:41:26,python -m src.hyperopt --model histgb --n-trials 80

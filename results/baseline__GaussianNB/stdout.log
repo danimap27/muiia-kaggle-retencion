@@ -1,0 +1,3 @@
+Evaluando 1 modelos con CV estratificada (5 folds)
+[1/1]     GaussianNB | F1=0.2757 ± 0.0620 | AUC=0.7662 | t=0.2s | ETA=0.0min
+Resultados guardados en /lustre/home/dmartin/proyecto-kaggle/results/models_cv.csv

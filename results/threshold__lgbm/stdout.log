@@ -1,0 +1,11 @@
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/lustre/home/dmartin/proyecto-kaggle/src/threshold_tune.py", line 65, in <module>
+    main()
+  File "/lustre/home/dmartin/proyecto-kaggle/src/threshold_tune.py", line 38, in main
+    pipe = build_final(args.model)
+           ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/lustre/home/dmartin/proyecto-kaggle/src/predict.py", line 31, in build_final
+    from lightgbm import LGBMClassifier
+ModuleNotFoundError: No module named 'lightgbm'

@@ -1,0 +1,15 @@
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/lustre/home/dmartin/proyecto-kaggle/src/predict.py", line 98, in <module>
+    main()
+  File "/lustre/home/dmartin/proyecto-kaggle/src/predict.py", line 74, in main
+    pipe = build_final(args.model)
+           ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/lustre/home/dmartin/proyecto-kaggle/src/predict.py", line 53, in build_final
+    return joblib.load(MODELS_DIR / "stacking.joblib")
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/dmartin/.conda/envs/kaggle-retencion/lib/python3.11/site-packages/joblib/numpy_pickle.py", line 735, in load
+    with open(filename, "rb") as f:
+         ^^^^^^^^^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: '/lustre/home/dmartin/proyecto-kaggle/models/stacking.joblib'

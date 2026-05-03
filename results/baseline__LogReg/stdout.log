@@ -1,0 +1,3 @@
+Evaluando 1 modelos con CV estratificada (5 folds)
+[1/1]         LogReg | F1=0.5572 ± 0.0216 | AUC=0.8321 | t=0.3s | ETA=0.0min
+Resultados guardados en /lustre/home/dmartin/proyecto-kaggle/results/models_cv.csv
