@@ -78,7 +78,15 @@ def main() -> None:
         joblib.dump(pipe, MODELS_DIR / f"{args.model}_final.joblib")
 
     print(f"Generando predicciones sobre {len(X_test)} muestras...")
-    preds = pipe.predict(X_test).astype(int)
+    # Si existe un umbral optimizado para este modelo se usa en lugar de 0.5.
+    thr_path = RES_DIR / f"threshold_{args.model}.json"
+    if thr_path.exists() and hasattr(pipe, "predict_proba"):
+        thr = json.load(open(thr_path))["best_threshold"]
+        proba = pipe.predict_proba(X_test)[:, 1]
+        preds = (proba >= thr).astype(int)
+        print(f"Aplicado umbral optimizado: {thr:.3f}")
+    else:
+        preds = pipe.predict(X_test).astype(int)
 
     sub = pd.DataFrame({ID_COL: test[ID_COL], TARGET: preds})
     out_path = RES_DIR / args.out
