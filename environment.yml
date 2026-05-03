@@ -1,0 +1,23 @@
+name: kaggle-retencion
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - python=3.11
+  - numpy=1.26.*
+  - pandas=2.2.*
+  - scipy=1.13.*
+  - scikit-learn=1.5.*
+  - matplotlib=3.9.*
+  - seaborn=0.13.*
+  - jupyter
+  - pip
+  - pip:
+      - xgboost==2.1.1
+      - lightgbm==4.5.0
+      - catboost==1.2.7
+      - optuna==4.0.0
+      - imbalanced-learn==0.12.4
+      - shap==0.46.0
+      - joblib==1.4.2
+      - pyyaml==6.0.2

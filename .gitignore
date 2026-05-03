@@ -1,0 +1,33 @@
+# Datos: no versionar (Kaggle TOS).
+data/*.csv
+!data/.gitkeep
+
+# Modelos serializados y resultados intermedios.
+models/*.joblib
+models/*.pkl
+results/*.csv
+results/*.json
+results/submission*.csv
+
+# Figuras pesadas opcionales.
+# figures/*.png
+
+# Logs SLURM y entorno.
+logs/*.out
+logs/*.err
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# OS / editores
+.DS_Store
+.vscode/
+.idea/
+*.swp
