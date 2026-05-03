@@ -39,10 +39,14 @@ def add_features(df: pd.DataFrame) -> pd.DataFrame:
     out["BalancePerProduct"] = out["Balance"] / (out["NumOfProducts"] + 1.0)
     out["SalaryPerProduct"] = out["EstimatedSalary"] / (out["NumOfProducts"] + 1.0)
 
-    # Indicadores binarios.
-    out["IsZeroBalance"] = (out["Balance"] == 0).astype(int)
-    out["IsHighProducts"] = (out["NumOfProducts"] >= 3).astype(int)
-    out["IsSenior"] = (out["Age"] >= 60).astype(int)
+    # Indicadores binarios. Se preserva NaN para que el imputer posterior
+    # lo trate como valor faltante en lugar de colapsarlo a 0.
+    out["IsZeroBalance"] = np.where(out["Balance"].isna(), np.nan,
+                                     (out["Balance"] == 0).astype(float))
+    out["IsHighProducts"] = np.where(out["NumOfProducts"].isna(), np.nan,
+                                      (out["NumOfProducts"] >= 3).astype(float))
+    out["IsSenior"] = np.where(out["Age"].isna(), np.nan,
+                                (out["Age"] >= 60).astype(float))
 
     # Productos x actividad: un cliente con varios productos pero inactivo
     # suele ser candidato a fuga.
