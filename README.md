@@ -25,7 +25,6 @@ proyecto-kaggle/
 ├── models/                     # modelos serializados (joblib)
 ├── figures/                    # gráficos EDA
 ├── memoria/                    # memoria PDF (max 10 págs)
-├── environment.yml
 ├── requirements.txt
 └── README.md
 ```
@@ -91,4 +90,4 @@ tail -f logs/baseline_*.out
 
 - Semilla fija (`SEED=42`) en config, modelos y splits.
 - 5-fold CV estratificada idéntica para todas las comparaciones.
-- `environment.yml` con versiones exactas y `requirements.txt` para pip.
+- Entorno conda con Python 3.11 y `pip install -r requirements.txt` (versiones exactas).
