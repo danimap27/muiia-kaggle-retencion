@@ -1,93 +1,114 @@
 # Proyecto Kaggle — Retención de clientes
 
-Trabajo final del módulo de Ciencia de Datos y Aprendizaje Automático del MUIIA (UIMP). El objetivo es predecir la variable `Exited` (1 = fuga, 0 = permanencia) sobre el dataset de retención de clientes bancarios. La métrica de la competición es **F1**.
+Trabajo final del módulo de Ciencia de Datos y Aprendizaje Automático del MUIIA (UIMP). Se predice la variable `Exited` (1 = fuga, 0 = permanencia) sobre un dataset de 8000 clientes bancarios. Métrica de la competición: **F1**.
 
-El código está pensado para ejecutarse en el **clúster Hércules del CICA** mediante SLURM y un entorno conda. Todas las rutas son relativas al directorio raíz del proyecto.
+El proyecto se ejecuta en el clúster **Hércules (CICA)** mediante el [hercules-framework](https://github.com/danimap27/hercules-framework): `config.yaml` define el sweep, `runner.py` traduce cada combinación a un comando, y `core/manager.py` lanza y monitoriza los array jobs SLURM.
 
 ## Estructura
 
 ```
 proyecto-kaggle/
-├── data/                       # train.csv, test.csv, sample_submission.csv (NO versionados)
+├── data/                       # train.csv, test.csv, sample_submission.csv (no versionados)
 ├── src/
 │   ├── config.py               # rutas, semilla, columnas
 │   ├── preprocessing.py        # ColumnTransformer + ingeniería de variables
 │   ├── eda.py                  # análisis exploratorio
-│   ├── cv.py                   # CV estratificada y métricas
+│   ├── cv.py                   # CV estratificada 5-fold y métricas
 │   ├── models.py               # catálogo de 14 modelos
-│   ├── train_baseline.py       # CV de todo el catálogo
+│   ├── train_baseline.py       # CV (acepta --only <modelo>)
 │   ├── hyperopt.py             # Optuna por modelo
-│   ├── stacking.py             # meta-modelo
+│   ├── threshold_tune.py       # umbral óptimo F1 OOF
+│   ├── stacking.py             # meta-modelo (XGB+LGBM+Cat+RF -> LogReg)
 │   └── predict.py              # genera submission.csv
-├── slurm/                      # scripts SLURM listos para sbatch
-├── logs/                       # salida de los jobs
-├── results/                    # CSV/JSON con métricas y predicciones
-├── models/                     # modelos serializados (joblib)
-├── figures/                    # gráficos EDA
-├── memoria/                    # memoria PDF (max 10 págs)
+├── core/                       # hercules-framework (no editar)
+│   ├── manager.py              # HUB interactivo (R/F/M/T)
+│   ├── slurm_generic.sh        # plantilla array job
+│   ├── generate_tables.py
+│   └── deploy.sh
+├── config.yaml                 # sweep + fases + etiquetas LaTeX
+├── runner.py                   # adapter del framework
 ├── requirements.txt
 └── README.md
 ```
 
-## Pipeline de modelado
+## Pipeline
 
-1. **EDA** (`src/eda.py`): distribución del target, histogramas por clase, correlaciones, tasa de fuga por país y género.
+1. **EDA** (`src/eda.py`).
 2. **Preprocesamiento** (`src/preprocessing.py`):
    - Imputación: mediana para numéricas, moda para categóricas.
-   - Escalado: `StandardScaler` (sólo para modelos lineales/MLP/SVM/KNN).
-   - Codificación: `OneHotEncoder(handle_unknown='ignore')` para `Geography` y `Gender`.
-   - Ingeniería de variables: `BalanceSalaryRatio`, `TenureByAge`, `CreditScoreByAge`, `BalancePerProduct`, `SalaryPerProduct`, `IsZeroBalance`, `IsHighProducts`, `IsSenior`, `ProductsActivity`.
-   - Todo en un único `ColumnTransformer` dentro de un `Pipeline` para que la CV no produzca fugas de datos.
-3. **Catálogo de modelos** (`src/models.py`): LDA, Logística, Naive Bayes, KNN, SVM RBF, MLP, árbol, Random Forest, Extra Trees, GradientBoosting, HistGradientBoosting, XGBoost, LightGBM, CatBoost.
-4. **Búsqueda de hiperparámetros** (`src/hyperopt.py`): Optuna con TPE y poda mediana, 80 trials por modelo (XGBoost, LightGBM, CatBoost, Random Forest, HistGB y MLP).
-5. **Stacking** (`src/stacking.py`): mete los tres mejores boostings + Random Forest como base y Logística como meta-aprendiz.
-6. **Predicción final** (`src/predict.py`): reentrena el modelo elegido sobre todo train y produce `submission_<modelo>.csv`.
+   - Escalado: `StandardScaler` (sólo modelos lineales/MLP/SVM/KNN).
+   - OneHot para `Geography` y `Gender`.
+   - 9 variables derivadas (cocientes, indicadores binarios).
+   - Todo dentro de un `ColumnTransformer` para evitar fugas en CV.
+3. **Catálogo** (`src/models.py`): LDA, Logística, NB, KNN, SVM RBF, MLP, árbol, Random Forest, Extra Trees, GradientBoosting, HistGradientBoosting, XGBoost, LightGBM, CatBoost.
+4. **Optuna** (`src/hyperopt.py`): TPE + poda mediana, 30-80 trials por modelo, callback con ETA.
+5. **Threshold tuning** (`src/threshold_tune.py`): umbral óptimo F1 sobre probabilidades OOF.
+6. **Stacking** (`src/stacking.py`): XGB+LGBM+Cat+RF como base, Logística como meta.
+7. **Predict** (`src/predict.py`): aplica el umbral optimizado si existe.
 
 ## Ejecución en Hércules
 
-> El nodo de login bloquea ejecuciones largas. Cualquier cosa más allá de `sbatch` y comprobaciones rápidas se hace en una sesión interactiva con `salloc`.
-
-### 1. Preparar entorno (una sola vez)
+### 1. Una sola vez: entorno conda
 
 ```bash
 salloc --mem=8G -c 4 -t 02:00:00 srun --pty /bin/bash -i
 cd ~/proyecto-kaggle
-bash slurm/00_setup_env.sh
+module load Miniconda3
+conda create -n kaggle-retencion python=3.11 -y
+source activate kaggle-retencion
+pip install -r requirements.txt
 exit
 ```
 
-### 2. Subir datos
+### 2. Datos
 
-Descargar `train.csv`, `test.csv` y `sample_submission.csv` desde la página de la competición y dejarlos en `data/`.
+Descargar `train.csv`, `test.csv`, `sample_submission.csv` y dejarlos en `data/`.
 
-### 3. Lanzar la cadena de jobs
-
-```bash
-sbatch slurm/01_eda.slurm                      # análisis exploratorio
-sbatch slurm/02_baseline.slurm                 # CV de los 14 modelos
-sbatch --array=0-5 slurm/03_hyperopt.slurm     # Optuna en paralelo
-sbatch slurm/04_stacking.slurm                 # meta-modelo
-sbatch slurm/05_predict.slurm lgbm             # submission.csv del mejor LightGBM
-sbatch slurm/05_predict.slurm stacking         # alternativa con stacking
-```
-
-Para monitorizar:
+### 3. Lanzar y monitorizar con manager
 
 ```bash
-squeue -u $USER
-tail -f logs/baseline_*.out
+cd ~/proyecto-kaggle
+python core/manager.py
 ```
 
-## Resultados esperados
+Menú interactivo:
+- `R` — refresca los `cmds_*.txt` desde `config.yaml`.
+- `1`, `2`, ... — lanza una fase como array job.
+- `F` — lanza todas las fases en cadena con dependencias SLURM.
+- `M` — monitor en vivo (F1 medio por fase, refresco 2 s).
+- `C` — comprueba qué runs ya están completas (resume).
+- `T` — genera tablas LaTeX desde los CSV.
+- `X` — sale.
 
-- `results/models_cv.csv` — tabla con F1, accuracy, precision, recall y AUC por modelo (5-fold CV).
-- `results/optuna_<modelo>.json` — mejores hiperparámetros y F1 alcanzado.
-- `results/stacking_cv.json` — métricas del stacking.
-- `results/submission_<modelo>.csv` — fichero final para subir a Kaggle.
-- `figures/eda_*.png` — gráficos del análisis exploratorio.
+### Fases (definidas en `config.yaml`)
+
+| # | Fase | Tareas | Cuándo |
+|---|---|---|---|
+| 1 | eda | 1 | Una vez al principio |
+| 2 | baseline | 14 (un modelo por tarea) | Tras EDA |
+| 3 | hyperopt | 6 (xgb, lgbm, cat, histgb, rf, mlp) | Tras baseline |
+| 4 | threshold | 4 (cat, histgb, xgb, lgbm) | Tras hyperopt |
+| 5 | stacking | 1 | Tras hyperopt |
+| 6 | predict | 5 (cat, histgb, xgb, lgbm, stacking) | Final |
+
+Total: 31 runs.
+
+### Ejecución manual sin manager
+
+```bash
+# Generar comandos
+python runner.py --export-commands
+
+# Lanzar una fase concreta como array
+sbatch --array=1-14 --export=CMD_FILE=cmds_2_baseline.txt \
+       --job-name=baseline core/slurm_generic.sh
+
+# Lanzar una orden suelta
+python runner.py --run-id hyperopt__cat
+```
 
 ## Reproducibilidad
 
 - Semilla fija (`SEED=42`) en config, modelos y splits.
 - 5-fold CV estratificada idéntica para todas las comparaciones.
-- Entorno conda con Python 3.11 y `pip install -r requirements.txt` (versiones exactas).
+- `requirements.txt` con versiones exactas (Python 3.11).

@@ -1,0 +1,129 @@
+# =============================================================================
+# config.yaml — Proyecto Kaggle Retención de clientes (MUIIA)
+# Configuración para hercules-framework. Cada fase es un array job SLURM.
+# =============================================================================
+
+experiment_name: "kaggle-retencion"
+conda_env: "kaggle-retencion"
+slurm_script: "core/slurm_generic.sh"
+
+output_dir: "./results"
+tables_dir: "./memoria/tablas"
+
+# ── Dimensiones del sweep ────────────────────────────────────────────────────
+
+# Modelos del catálogo a evaluar en CV (baseline).
+baseline_models:
+  - "LDA"
+  - "LogReg"
+  - "GaussianNB"
+  - "SVC_RBF"
+  - "KNN"
+  - "MLP"
+  - "DecisionTree"
+  - "RandomForest"
+  - "ExtraTrees"
+  - "GradBoost"
+  - "HistGB"
+  - "XGBoost"
+  - "LightGBM"
+  - "CatBoost"
+
+# Modelos para Optuna. n_trials por modelo.
+hyperopt_models:
+  - { name: "cat",    trials: 80 }
+  - { name: "histgb", trials: 80 }
+  - { name: "xgb",    trials: 80 }
+  - { name: "lgbm",   trials: 80 }
+  - { name: "rf",     trials: 50 }
+  - { name: "mlp",    trials: 30 }
+
+# Modelos para threshold tuning post-hyperopt.
+threshold_models: ["cat", "histgb", "xgb", "lgbm"]
+
+# Modelos finales para generar submission.
+predict_models: ["cat", "histgb", "xgb", "lgbm", "stacking"]
+
+# ── Fases SLURM ──────────────────────────────────────────────────────────────
+# Cada fase es un array job: una tarea por línea en el .txt correspondiente.
+# Secuencia recomendada con dependencias: 1 -> 2 -> 3 -> 4 -> 5 -> 6.
+
+phases:
+  - id: "1"
+    name: "eda"
+    file: "cmds_1_eda.txt"
+    description: "Fase 1 — Análisis exploratorio (genera figuras y tablas)"
+    kind: "eda"
+
+  - id: "2"
+    name: "baseline"
+    file: "cmds_2_baseline.txt"
+    description: "Fase 2 — CV de los 14 modelos del catálogo (uno por tarea)"
+    kind: "baseline"
+
+  - id: "3"
+    name: "hyperopt"
+    file: "cmds_3_hyperopt.txt"
+    description: "Fase 3 — Optuna en paralelo (6 modelos, una tarea cada uno)"
+    kind: "hyperopt"
+
+  - id: "4"
+    name: "threshold"
+    file: "cmds_4_threshold.txt"
+    description: "Fase 4 — Optimización del umbral por F1 (4 modelos)"
+    kind: "threshold"
+
+  - id: "5"
+    name: "stacking"
+    file: "cmds_5_stacking.txt"
+    description: "Fase 5 — Meta-modelo de stacking"
+    kind: "stacking"
+
+  - id: "6"
+    name: "predict"
+    file: "cmds_6_predict.txt"
+    description: "Fase 6 — Submissions Kaggle (5 ficheros)"
+    kind: "predict"
+
+expected_runs: 30   # 1 + 14 + 6 + 4 + 1 + 5 = 31 (aprox.)
+
+# ── Lectura de resultados para el monitor ────────────────────────────────────
+results:
+  file_pattern: "*.csv"
+  group_by: ["model"]
+  metrics: ["f1_mean", "roc_auc_mean", "accuracy_mean"]
+
+# ── Etiquetas LaTeX para generate_tables.py ──────────────────────────────────
+labels:
+  model:
+    LDA: "LDA"
+    LogReg: "Logistic Regression"
+    GaussianNB: "Naive Bayes"
+    SVC_RBF: "SVM (RBF)"
+    KNN: "$k$-NN"
+    MLP: "MLP"
+    DecisionTree: "Decision Tree"
+    RandomForest: "Random Forest"
+    ExtraTrees: "Extra Trees"
+    GradBoost: "Gradient Boosting"
+    HistGB: "HistGradientBoosting"
+    XGBoost: "XGBoost"
+    LightGBM: "LightGBM"
+    CatBoost: "CatBoost"
+    Stacking: "Stacking"
+
+tables:
+  - name: "tab_baseline"
+    caption: "Resultados de validación cruzada (5 folds) sobre el conjunto de entrenamiento."
+    label: "tab:baseline"
+    rows: "model"
+    metrics:
+      - column: "f1_mean"
+        label: "F1"
+        pct: false
+      - column: "roc_auc_mean"
+        label: "AUC"
+        pct: false
+      - column: "accuracy_mean"
+        label: "Acc"
+        pct: false

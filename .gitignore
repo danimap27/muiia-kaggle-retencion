@@ -16,6 +16,9 @@ results/submission*.csv
 logs/*.out
 logs/*.err
 
+# Ficheros de comandos generados por runner.py.
+cmds_*.txt
+
 # Python
 __pycache__/
 *.py[cod]
