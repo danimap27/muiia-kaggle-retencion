@@ -93,6 +93,14 @@ def _runs_stacking(cfg: dict) -> Iterable[dict]:
     }
 
 
+def _runs_blend(cfg: dict) -> Iterable[dict]:
+    yield {
+        "run_id": "blend",
+        "phase": "blend",
+        "cmd": "python -m src.blend",
+    }
+
+
 def _runs_predict(cfg: dict) -> Iterable[dict]:
     for m in cfg["predict_models"]:
         yield {
@@ -109,6 +117,7 @@ PHASE_BUILDERS = {
     "hyperopt": _runs_hyperopt,
     "threshold": _runs_threshold,
     "stacking": _runs_stacking,
+    "blend": _runs_blend,
     "predict": _runs_predict,
 }
 

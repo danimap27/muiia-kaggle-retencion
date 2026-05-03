@@ -1,2 +1,2 @@
 run_id,phase,model,exit_code,elapsed_sec,machine_id,timestamp,cmd
-baseline__MLP,baseline,MLP,0,7.5,local,2026-05-03T12:40:14,python -m src.train_baseline --only MLP
+baseline__MLP,baseline,MLP,0,5.8,local,2026-05-03T12:50:37,python -m src.train_baseline --only MLP

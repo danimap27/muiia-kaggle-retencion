@@ -12,6 +12,7 @@ import json
 from pathlib import Path
 
 import joblib
+import numpy as np
 import pandas as pd
 
 from .config import TRAIN_CSV, TEST_CSV, RES_DIR, MODELS_DIR, ID_COL, TARGET, SEED
@@ -68,7 +69,7 @@ def build_final(model: str) -> Pipeline:
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--model", default="lgbm",
-                        choices=["lgbm", "xgb", "cat", "histgb", "stacking"])
+                        choices=["lgbm", "xgb", "cat", "histgb", "stacking", "blend"])
     parser.add_argument("--out", default="submission.csv")
     args = parser.parse_args()
 
@@ -78,22 +79,34 @@ def main() -> None:
     X_train, y_train = split_X_y(train)
     X_test, _ = split_X_y(test)
 
-    pipe = build_final(args.model)
-    if args.model != "stacking":
-        print(f"Reentrenando {args.model} sobre {len(X_train)} muestras...")
-        pipe.fit(X_train, y_train)
-        joblib.dump(pipe, MODELS_DIR / f"{args.model}_final.joblib")
-
-    print(f"Generando predicciones sobre {len(X_test)} muestras...")
-    # Si existe un umbral optimizado para este modelo se usa en lugar de 0.5.
-    thr_path = RES_DIR / f"threshold_{args.model}.json"
-    if thr_path.exists() and hasattr(pipe, "predict_proba"):
-        thr = json.load(open(thr_path))["best_threshold"]
-        proba = pipe.predict_proba(X_test)[:, 1]
-        preds = (proba >= thr).astype(int)
-        print(f"Aplicado umbral optimizado: {thr:.3f}")
+    if args.model == "blend":
+        # Blend de probabilidades de modelos individuales reentrenados.
+        blend = json.load(open(RES_DIR / "blend.json"))
+        print(f"Blend: pesos {dict(zip(blend['models'], blend['weights']))}")
+        probas = np.zeros(len(X_test))
+        for m, w in zip(blend["models"], blend["weights"]):
+            sub_pipe = build_final(m)
+            sub_pipe.fit(X_train, y_train)
+            probas += w * sub_pipe.predict_proba(X_test)[:, 1]
+        thr = blend["threshold"]
+        preds = (probas >= thr).astype(int)
+        print(f"Aplicado umbral del blend: {thr:.3f}")
     else:
-        preds = pipe.predict(X_test).astype(int)
+        pipe = build_final(args.model)
+        if args.model != "stacking":
+            print(f"Reentrenando {args.model} sobre {len(X_train)} muestras...")
+            pipe.fit(X_train, y_train)
+            joblib.dump(pipe, MODELS_DIR / f"{args.model}_final.joblib")
+
+        print(f"Generando predicciones sobre {len(X_test)} muestras...")
+        thr_path = RES_DIR / f"threshold_{args.model}.json"
+        if thr_path.exists() and hasattr(pipe, "predict_proba"):
+            thr = json.load(open(thr_path))["best_threshold"]
+            proba = pipe.predict_proba(X_test)[:, 1]
+            preds = (proba >= thr).astype(int)
+            print(f"Aplicado umbral optimizado: {thr:.3f}")
+        else:
+            preds = pipe.predict(X_test).astype(int)
 
     sub = pd.DataFrame({ID_COL: test[ID_COL], TARGET: preds})
     out_path = RES_DIR / args.out

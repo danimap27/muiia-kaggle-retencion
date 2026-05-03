@@ -24,14 +24,30 @@ from .predict import build_final
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--model", default="lgbm",
-                        choices=["lgbm", "xgb", "cat", "histgb", "stacking"])
+                        choices=["lgbm", "xgb", "cat", "histgb", "rf", "gb",
+                                  "stacking", "blend"])
     args = parser.parse_args()
 
     df = pd.read_csv(TRAIN_CSV)
     X, y = split_X_y(df)
 
-    if args.model == "histgb":
-        # No está en build_final; reusar pipeline de models.py
+    if args.model == "blend":
+        # El umbral del blend se obtiene en src.blend (ya consolidado).
+        bj = json.load(open(RES_DIR / "blend.json"))
+        out = {"model": "blend", "best_threshold": bj["threshold"],
+                "best_f1": bj["best_f1"], "f1_at_0.5": None}
+        with open(RES_DIR / "threshold_blend.json", "w") as f:
+            json.dump(out, f, indent=2)
+        print(f"Blend threshold: {bj['threshold']:.3f} | F1={bj['best_f1']:.4f}")
+        return
+
+    if args.model == "rf":
+        from .models import get_models
+        pipe = get_models()["RandomForest"]
+    elif args.model == "gb":
+        from .models import get_models
+        pipe = get_models()["GradBoost"]
+    elif args.model == "histgb":
         from .models import get_models
         pipe = get_models()["HistGB"]
     else:

@@ -9,19 +9,22 @@ from __future__ import annotations
 
 from typing import Dict
 from sklearn.pipeline import Pipeline
-from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
-from sklearn.linear_model import LogisticRegression
-from sklearn.svm import SVC
+from sklearn.discriminant_analysis import LinearDiscriminantAnalysis, QuadraticDiscriminantAnalysis
+from sklearn.linear_model import LogisticRegression, RidgeClassifier, SGDClassifier
+from sklearn.svm import SVC, LinearSVC
 from sklearn.neighbors import KNeighborsClassifier
-from sklearn.naive_bayes import GaussianNB
+from sklearn.naive_bayes import GaussianNB, BernoulliNB
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.ensemble import (
     RandomForestClassifier,
     GradientBoostingClassifier,
     HistGradientBoostingClassifier,
     ExtraTreesClassifier,
+    AdaBoostClassifier,
+    BaggingClassifier,
 )
 from sklearn.neural_network import MLPClassifier
+from sklearn.calibration import CalibratedClassifierCV
 
 from .preprocessing import make_preprocessor
 from .config import SEED
@@ -42,6 +45,7 @@ def get_models() -> Dict[str, Pipeline]:
 
     # Lineales / clásicos. class_weight="balanced" porque la clase positiva es ~20%.
     models["LDA"] = _wrap("LDA", LinearDiscriminantAnalysis(), scale=True)
+    models["QDA"] = _wrap("QDA", QuadraticDiscriminantAnalysis(reg_param=0.1), scale=True)
     models["LogReg"] = _wrap(
         "LogReg",
         LogisticRegression(
@@ -49,7 +53,35 @@ def get_models() -> Dict[str, Pipeline]:
         ),
         scale=True,
     )
+    models["LogRegL1"] = _wrap(
+        "LogRegL1",
+        LogisticRegression(
+            penalty="l1", C=1.0, max_iter=2000, class_weight="balanced",
+            solver="liblinear", random_state=SEED,
+        ),
+        scale=True,
+    )
+    models["Ridge"] = _wrap(
+        "Ridge",
+        RidgeClassifier(class_weight="balanced", random_state=SEED),
+        scale=True,
+    )
+    models["SGD"] = _wrap(
+        "SGD",
+        SGDClassifier(loss="log_loss", class_weight="balanced",
+                      max_iter=1000, random_state=SEED, n_jobs=-1),
+        scale=True,
+    )
     models["GaussianNB"] = _wrap("GaussianNB", GaussianNB(), scale=True)
+    models["BernoulliNB"] = _wrap("BernoulliNB", BernoulliNB(), scale=True)
+    models["LinearSVC"] = _wrap(
+        "LinearSVC",
+        CalibratedClassifierCV(
+            LinearSVC(C=1.0, class_weight="balanced", random_state=SEED, max_iter=2000),
+            cv=3,
+        ),
+        scale=True,
+    )
     models["SVC_RBF"] = _wrap(
         "SVC_RBF",
         SVC(C=1.0, gamma="scale", probability=True,
@@ -94,6 +126,16 @@ def get_models() -> Dict[str, Pipeline]:
     models["HistGB"] = _wrap(
         "HistGB",
         HistGradientBoostingClassifier(random_state=SEED, class_weight="balanced"),
+        scale=False,
+    )
+    models["AdaBoost"] = _wrap(
+        "AdaBoost",
+        AdaBoostClassifier(n_estimators=300, learning_rate=0.5, random_state=SEED),
+        scale=False,
+    )
+    models["Bagging"] = _wrap(
+        "Bagging",
+        BaggingClassifier(n_estimators=200, random_state=SEED, n_jobs=-1),
         scale=False,
     )
 

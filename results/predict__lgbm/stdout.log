@@ -1,9 +1,9 @@
 Traceback (most recent call last):
   File "<frozen runpy>", line 198, in _run_module_as_main
   File "<frozen runpy>", line 88, in _run_code
-  File "/lustre/home/dmartin/proyecto-kaggle/src/predict.py", line 98, in <module>
+  File "/lustre/home/dmartin/proyecto-kaggle/src/predict.py", line 105, in <module>
     main()
-  File "/lustre/home/dmartin/proyecto-kaggle/src/predict.py", line 74, in main
+  File "/lustre/home/dmartin/proyecto-kaggle/src/predict.py", line 81, in main
     pipe = build_final(args.model)
            ^^^^^^^^^^^^^^^^^^^^^^^
   File "/lustre/home/dmartin/proyecto-kaggle/src/predict.py", line 31, in build_final

@@ -1,2 +1,2 @@
 run_id,phase,model,exit_code,elapsed_sec,machine_id,timestamp,cmd
-hyperopt__lgbm,hyperopt,lgbm,1,0.5,local,2026-05-03T12:41:25,python -m src.hyperopt --model lgbm --n-trials 80
+hyperopt__lgbm,hyperopt,lgbm,1,0.2,local,2026-05-03T12:51:36,python -m src.hyperopt --model lgbm --n-trials 80

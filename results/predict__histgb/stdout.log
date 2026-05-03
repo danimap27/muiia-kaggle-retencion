@@ -1,2 +1,4 @@
-usage: predict.py [-h] [--model {lgbm,xgb,cat,stacking}] [--out OUT]
-predict.py: error: argument --model: invalid choice: 'histgb' (choose from 'lgbm', 'xgb', 'cat', 'stacking')
+Reentrenando histgb sobre 8000 muestras...
+Generando predicciones sobre 2000 muestras...
+Aplicado umbral optimizado: 0.590
+Submission guardada en /lustre/home/dmartin/proyecto-kaggle/results/submission_histgb.csv (0.216 positivos)

@@ -1,2 +1,2 @@
 run_id,phase,model,exit_code,elapsed_sec,machine_id,timestamp,cmd
-baseline__ExtraTrees,baseline,ExtraTrees,0,9.3,local,2026-05-03T12:40:16,python -m src.train_baseline --only ExtraTrees
+baseline__ExtraTrees,baseline,ExtraTrees,0,7.9,local,2026-05-03T12:50:39,python -m src.train_baseline --only ExtraTrees

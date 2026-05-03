@@ -15,8 +15,14 @@ tables_dir: "./memoria/tablas"
 # Modelos del catálogo a evaluar en CV (baseline).
 baseline_models:
   - "LDA"
+  - "QDA"
   - "LogReg"
+  - "LogRegL1"
+  - "Ridge"
+  - "SGD"
   - "GaussianNB"
+  - "BernoulliNB"
+  - "LinearSVC"
   - "SVC_RBF"
   - "KNN"
   - "MLP"
@@ -25,24 +31,31 @@ baseline_models:
   - "ExtraTrees"
   - "GradBoost"
   - "HistGB"
+  - "AdaBoost"
+  - "Bagging"
   - "XGBoost"
   - "LightGBM"
   - "CatBoost"
 
-# Modelos para Optuna. n_trials por modelo.
+# Modelos para Optuna. n_trials elevados (cada modelo entrena en segundos).
 hyperopt_models:
-  - { name: "cat",    trials: 80 }
-  - { name: "histgb", trials: 80 }
-  - { name: "xgb",    trials: 80 }
-  - { name: "lgbm",   trials: 80 }
-  - { name: "rf",     trials: 50 }
-  - { name: "mlp",    trials: 30 }
+  - { name: "cat",    trials: 250 }
+  - { name: "histgb", trials: 250 }
+  - { name: "xgb",    trials: 250 }
+  - { name: "lgbm",   trials: 250 }
+  - { name: "rf",     trials: 150 }
+  - { name: "gb",     trials: 150 }
+  - { name: "mlp",    trials: 80 }
+  - { name: "svc",    trials: 80 }
 
-# Modelos para threshold tuning post-hyperopt.
-threshold_models: ["cat", "histgb", "xgb", "lgbm"]
+# Threshold tuning para todos los modelos optimizados + stacking + blend.
+threshold_models: ["cat", "histgb", "xgb", "lgbm", "rf", "gb", "stacking", "blend"]
 
-# Modelos finales para generar submission.
-predict_models: ["cat", "histgb", "xgb", "lgbm", "stacking"]
+# Modelos finales para submissions Kaggle.
+predict_models: ["cat", "histgb", "xgb", "lgbm", "stacking", "blend"]
+
+# Modelos a incluir en el blending de probabilidades.
+blend_models: ["cat", "histgb", "xgb", "lgbm"]
 
 # ── Fases SLURM ──────────────────────────────────────────────────────────────
 # Cada fase es un array job: una tarea por línea en el .txt correspondiente.
@@ -52,46 +65,59 @@ phases:
   - id: "1"
     name: "eda"
     file: "cmds_1_eda.txt"
-    description: "Fase 1 — Análisis exploratorio (genera figuras y tablas)"
+    description: "Fase 1 — Análisis exploratorio"
     kind: "eda"
+    filters: { phase: "eda" }
 
   - id: "2"
     name: "baseline"
     file: "cmds_2_baseline.txt"
-    description: "Fase 2 — CV de los 14 modelos del catálogo (uno por tarea)"
+    description: "Fase 2 — CV de 18 modelos del catálogo"
     kind: "baseline"
+    filters: { phase: "baseline" }
 
   - id: "3"
     name: "hyperopt"
     file: "cmds_3_hyperopt.txt"
-    description: "Fase 3 — Optuna en paralelo (6 modelos, una tarea cada uno)"
+    description: "Fase 3 — Optuna 8 modelos"
     kind: "hyperopt"
+    filters: { phase: "hyperopt" }
 
   - id: "4"
     name: "threshold"
     file: "cmds_4_threshold.txt"
-    description: "Fase 4 — Optimización del umbral por F1 (4 modelos)"
+    description: "Fase 4 — Optimización umbral F1"
     kind: "threshold"
+    filters: { phase: "threshold" }
 
   - id: "5"
     name: "stacking"
     file: "cmds_5_stacking.txt"
-    description: "Fase 5 — Meta-modelo de stacking"
+    description: "Fase 5 — Meta-modelo stacking"
     kind: "stacking"
+    filters: { phase: "stacking" }
 
   - id: "6"
-    name: "predict"
-    file: "cmds_6_predict.txt"
-    description: "Fase 6 — Submissions Kaggle (5 ficheros)"
-    kind: "predict"
+    name: "blend"
+    file: "cmds_6_blend.txt"
+    description: "Fase 6 — Blending probabilístico top-K"
+    kind: "blend"
+    filters: { phase: "blend" }
 
-expected_runs: 30   # 1 + 14 + 6 + 4 + 1 + 5 = 31 (aprox.)
+  - id: "7"
+    name: "predict"
+    file: "cmds_7_predict.txt"
+    description: "Fase 7 — Submissions Kaggle"
+    kind: "predict"
+    filters: { phase: "predict" }
+
+expected_runs: 50
 
 # ── Lectura de resultados para el monitor ────────────────────────────────────
 results:
-  file_pattern: "*.csv"
-  group_by: ["model"]
-  metrics: ["f1_mean", "roc_auc_mean", "accuracy_mean"]
+  file_pattern: "run.csv"
+  group_by: ["phase"]
+  metrics: ["exit_code", "elapsed_sec"]
 
 # ── Etiquetas LaTeX para generate_tables.py ──────────────────────────────────
 labels:

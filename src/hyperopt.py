@@ -19,8 +19,10 @@ import optuna
 import pandas as pd
 from sklearn.ensemble import (
     HistGradientBoostingClassifier, RandomForestClassifier,
+    GradientBoostingClassifier,
 )
 from sklearn.neural_network import MLPClassifier
+from sklearn.svm import SVC
 from sklearn.pipeline import Pipeline
 
 from .config import TRAIN_CSV, RES_DIR, SEED
@@ -144,6 +146,29 @@ def objective_mlp(trial, X, y):
     return _score(_wrap(clf, scale=True), X, y)
 
 
+def objective_gb(trial, X, y):
+    params = {
+        "n_estimators": trial.suggest_int("n_estimators", 100, 800, step=50),
+        "max_depth": trial.suggest_int("max_depth", 2, 10),
+        "learning_rate": trial.suggest_float("learning_rate", 0.01, 0.3, log=True),
+        "subsample": trial.suggest_float("subsample", 0.6, 1.0),
+        "min_samples_split": trial.suggest_int("min_samples_split", 2, 20),
+        "min_samples_leaf": trial.suggest_int("min_samples_leaf", 1, 15),
+    }
+    clf = GradientBoostingClassifier(**params, random_state=SEED)
+    return _score(_wrap(clf, scale=False), X, y)
+
+
+def objective_svc(trial, X, y):
+    params = {
+        "C": trial.suggest_float("C", 0.01, 100.0, log=True),
+        "gamma": trial.suggest_categorical("gamma", ["scale", "auto"]),
+        "kernel": trial.suggest_categorical("kernel", ["rbf", "poly", "sigmoid"]),
+    }
+    clf = SVC(**params, class_weight="balanced", probability=True, random_state=SEED)
+    return _score(_wrap(clf, scale=True), X, y)
+
+
 OBJECTIVES = {
     "xgb": objective_xgb,
     "lgbm": objective_lgbm,
@@ -151,6 +176,8 @@ OBJECTIVES = {
     "rf": objective_rf,
     "histgb": objective_histgb,
     "mlp": objective_mlp,
+    "gb": objective_gb,
+    "svc": objective_svc,
 }
 
 

@@ -1,2 +1,2 @@
 run_id,phase,model,exit_code,elapsed_sec,machine_id,timestamp,cmd
-baseline__KNN,baseline,KNN,0,3.7,local,2026-05-03T12:40:10,python -m src.train_baseline --only KNN
+baseline__KNN,baseline,KNN,0,1.9,local,2026-05-03T12:50:33,python -m src.train_baseline --only KNN

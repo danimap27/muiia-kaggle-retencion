@@ -1,2 +1,2 @@
 run_id,phase,model,exit_code,elapsed_sec,machine_id,timestamp,cmd
-predict__cat,predict,cat,1,3.1,local,2026-05-03T12:43:03,python -m src.predict --model cat --out submission_cat.csv
+predict__cat,predict,cat,1,1.2,local,2026-05-03T12:52:41,python -m src.predict --model cat --out submission_cat.csv

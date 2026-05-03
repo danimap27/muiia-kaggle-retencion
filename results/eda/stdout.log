@@ -1,0 +1,7 @@
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/lustre/home/dmartin/proyecto-kaggle/src/eda.py", line 20, in <module>
+    sns.set_theme(style="whitegrid", context="notebook")
+    ^^^^^^^^^^^^^
+AttributeError: module 'seaborn' has no attribute 'set_theme'
