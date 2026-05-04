@@ -68,30 +68,34 @@ def main() -> None:
     P = np.column_stack(proba_matrix)
     n = P.shape[1]
 
-    # Búsqueda conjunta de pesos y umbral.
+    # Búsqueda conjunta de pesos y umbral con multi-start.
+    rng = np.random.default_rng(SEED)
     best = {"f1": 0.0, "weights": None, "threshold": 0.5}
     for thr in np.linspace(0.2, 0.7, 26):
-        # Inicialización uniforme.
-        w0 = np.ones(n) / n
+        for restart in range(8):
+            if restart == 0:
+                w0 = np.ones(n) / n
+            else:
+                w0 = rng.dirichlet(np.ones(n))
 
-        def neg_f1(w):
-            w = np.clip(w, 0, None)
-            s = w.sum()
-            if s == 0:
-                return 0.0
-            w = w / s
-            return -_f1_blend(w, P, y, thr)
+            def neg_f1(w):
+                w = np.clip(w, 0, None)
+                s = w.sum()
+                if s == 0:
+                    return 0.0
+                w = w / s
+                return -_f1_blend(w, P, y, thr)
 
-        res = minimize(neg_f1, w0, method="Nelder-Mead",
-                       options={"xatol": 1e-3, "fatol": 1e-4, "maxiter": 200})
-        w = np.clip(res.x, 0, None)
-        if w.sum() == 0:
-            continue
-        w = w / w.sum()
-        f1_now = -res.fun
-        if f1_now > best["f1"]:
-            best = {"f1": float(f1_now), "weights": w.tolist(),
-                    "threshold": float(thr)}
+            res = minimize(neg_f1, w0, method="Nelder-Mead",
+                           options={"xatol": 1e-3, "fatol": 1e-4, "maxiter": 400})
+            w = np.clip(res.x, 0, None)
+            if w.sum() == 0:
+                continue
+            w = w / w.sum()
+            f1_now = -res.fun
+            if f1_now > best["f1"]:
+                best = {"f1": float(f1_now), "weights": w.tolist(),
+                        "threshold": float(thr)}
 
     # Resultado.
     out = {

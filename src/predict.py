@@ -56,8 +56,41 @@ def build_final(model: str) -> Pipeline:
             class_weight="balanced", random_state=SEED,
         )
         scale = False
+    elif model == "rf":
+        from sklearn.ensemble import RandomForestClassifier
+        clf = RandomForestClassifier(
+            **_load_params("rf"),
+            class_weight="balanced_subsample", random_state=SEED, n_jobs=-1,
+        )
+        scale = False
+    elif model == "gb":
+        from sklearn.ensemble import GradientBoostingClassifier
+        clf = GradientBoostingClassifier(**_load_params("gb"), random_state=SEED)
+        scale = False
+    elif model == "mlp":
+        from sklearn.neural_network import MLPClassifier
+        params = _load_params("mlp")
+        if "h1" in params:
+            params["hidden_layer_sizes"] = (params.pop("h1"), params.pop("h2"))
+        clf = MLPClassifier(
+            **params, max_iter=500, random_state=SEED, early_stopping=True,
+        )
+        scale = True
+    elif model == "svc":
+        from sklearn.svm import SVC
+        clf = SVC(
+            **_load_params("svc"), probability=True,
+            class_weight="balanced", random_state=SEED,
+        )
+        scale = True
+    elif model == "logreg":
+        from sklearn.linear_model import LogisticRegression
+        clf = LogisticRegression(
+            max_iter=2000, class_weight="balanced", solver="lbfgs",
+            random_state=SEED,
+        )
+        scale = True
     elif model == "stacking":
-        # El pipeline de stacking ya viene serializado.
         return joblib.load(MODELS_DIR / "stacking.joblib")
     else:
         raise ValueError(f"Modelo desconocido: {model}")
@@ -69,7 +102,8 @@ def build_final(model: str) -> Pipeline:
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--model", default="lgbm",
-                        choices=["lgbm", "xgb", "cat", "histgb", "stacking", "blend"])
+                        choices=["lgbm", "xgb", "cat", "histgb", "rf", "gb",
+                                  "mlp", "svc", "logreg", "stacking", "blend"])
     parser.add_argument("--out", default="submission.csv")
     args = parser.parse_args()
 

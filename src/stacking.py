@@ -55,22 +55,35 @@ def _cat(params=None):
 
 
 def build_stack() -> Pipeline:
-    """Construye el StackingClassifier completo dentro de un pipeline."""
+    """Stacking con base diversa (gbms + mlp + svc) y meta-modelo LightGBM."""
+    from sklearn.ensemble import HistGradientBoostingClassifier
+    from sklearn.neural_network import MLPClassifier
+    from sklearn.svm import SVC
+    from lightgbm import LGBMClassifier
     estimators = [
         ("xgb", _xgb(_load_best("xgb"))),
         ("lgbm", _lgbm(_load_best("lgbm"))),
         ("cat", _cat(_load_best("cat"))),
+        ("histgb", HistGradientBoostingClassifier(
+            random_state=SEED, class_weight="balanced",
+            **(_load_best("histgb") or {}))),
         ("rf", RandomForestClassifier(
-            n_estimators=400, class_weight="balanced",
-            random_state=SEED, n_jobs=-1,
-        )),
+            n_estimators=500, class_weight="balanced_subsample",
+            random_state=SEED, n_jobs=-1)),
+        ("mlp", MLPClassifier(hidden_layer_sizes=(128, 64), max_iter=400,
+                              random_state=SEED, early_stopping=True)),
+        ("svc", SVC(C=1.0, gamma="scale", probability=True,
+                    class_weight="balanced", random_state=SEED)),
     ]
-    final = LogisticRegression(max_iter=2000, C=1.0, random_state=SEED)
+    final = LGBMClassifier(
+        n_estimators=200, learning_rate=0.05, num_leaves=15,
+        class_weight="balanced", random_state=SEED, n_jobs=-1, verbose=-1,
+    )
     stack = StackingClassifier(
         estimators=estimators, final_estimator=final,
-        cv=5, passthrough=False, n_jobs=1,
+        cv=5, passthrough=True, n_jobs=1,
     )
-    return Pipeline(steps=[("preprocessor", make_preprocessor(scale=False)),
+    return Pipeline(steps=[("preprocessor", make_preprocessor(scale=True)),
                             ("classifier", stack)])
 
 

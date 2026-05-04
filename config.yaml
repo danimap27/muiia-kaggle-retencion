@@ -49,13 +49,13 @@ hyperopt_models:
   - { name: "svc",    trials: 80 }
 
 # Threshold tuning para todos los modelos optimizados + stacking + blend.
-threshold_models: ["cat", "histgb", "xgb", "lgbm", "rf", "gb", "stacking", "blend"]
+threshold_models: ["cat", "histgb", "xgb", "lgbm", "rf", "gb", "mlp", "svc", "logreg", "stacking", "blend"]
 
 # Modelos finales para submissions Kaggle.
-predict_models: ["cat", "histgb", "xgb", "lgbm", "stacking", "blend"]
+predict_models: ["cat", "histgb", "xgb", "lgbm", "gb", "rf", "stacking", "blend"]
 
 # Modelos a incluir en el blending de probabilidades.
-blend_models: ["cat", "histgb", "xgb", "lgbm"]
+blend_models: ["cat", "histgb", "xgb", "lgbm", "gb", "rf", "mlp", "svc", "logreg"]
 
 # ── Fases SLURM ──────────────────────────────────────────────────────────────
 # Cada fase es un array job: una tarea por línea en el .txt correspondiente.

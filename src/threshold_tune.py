@@ -25,7 +25,7 @@ def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--model", default="lgbm",
                         choices=["lgbm", "xgb", "cat", "histgb", "rf", "gb",
-                                  "stacking", "blend"])
+                                  "mlp", "svc", "logreg", "stacking", "blend"])
     args = parser.parse_args()
 
     df = pd.read_csv(TRAIN_CSV)
@@ -41,17 +41,7 @@ def main() -> None:
         print(f"Blend threshold: {bj['threshold']:.3f} | F1={bj['best_f1']:.4f}")
         return
 
-    if args.model == "rf":
-        from .models import get_models
-        pipe = get_models()["RandomForest"]
-    elif args.model == "gb":
-        from .models import get_models
-        pipe = get_models()["GradBoost"]
-    elif args.model == "histgb":
-        from .models import get_models
-        pipe = get_models()["HistGB"]
-    else:
-        pipe = build_final(args.model)
+    pipe = build_final(args.model)
 
     print(f"Calculando probabilidades OOF para {args.model}...")
     proba = cross_val_predict(pipe, X, y, cv=stratified_kfold(),
